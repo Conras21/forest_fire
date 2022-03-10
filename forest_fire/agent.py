@@ -8,7 +8,7 @@ class TreeCell(Agent):
 
     Attributes:
         x, y: Grid coordinates
-        condition: Can be "Fine", "On Fire", or "Burned Out"
+        condition: Can be "Fine", "On Fire", or "Burned Out" or "Humid"
         unique_id: (x,y) tuple.
 
     unique_id isn't strictly necessary here, but it's good
@@ -35,5 +35,7 @@ class TreeCell(Agent):
                 if neighbor.condition == "Fine":
                     neighbor.condition = "On Fire"
                 if neighbor.condition == "Humid":
-                    neighbor.condition = "Fine"
+                    number = self.random.randint(0,3)
+                    if number == 0:
+                        neighbor.condition = "Fine"
             self.condition = "Burned Out"

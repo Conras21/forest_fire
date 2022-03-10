@@ -1,10 +1,14 @@
+import datetime
+from doctest import OutputChecker
 from random import random, sample
+import this
 from mesa import Model
 from mesa.datacollection import DataCollector
 from mesa.space import Grid
 from mesa.time import RandomActivation
+from mesa.batchrunner import BatchRunner
 
-from .agent import TreeCell
+from agent import TreeCell
 
 
 class ForestFire(Model):
@@ -31,13 +35,19 @@ class ForestFire(Model):
                 "Humid": lambda m: self.count_type(m, "Humid")
             }
         )
+
+        self.fine = lambda m: self.count_type(m, "Fine")
+        self.fire = lambda m: self.count_type(m, "On Fire")
+        self.burned = lambda m: self.count_type(m, "Burned Out")
+        self.humid = lambda m: self.count_type(m, "Humid")
+
         count = 1
         for (contents, x, y) in self.grid.coord_iter():
             if self.random.random() < density:
                 count += 1
         quantity = count * (humidity_level)
         randomX = self.random.sample(range(count), int(quantity))
-        randomY = self.random.sample(range(count), int (quantity))
+        randomY = self.random.sample(range(count), int(quantity))
         randomX.sort()
         randomY.sort()
         # Place a tree in each cell with Prob = density
@@ -80,3 +90,60 @@ class ForestFire(Model):
             if tree.condition == tree_condition:
                 count += 1
         return count
+
+
+def fine(model):
+    return model.fine
+
+def fire(model):
+    return model.fire
+
+def humid(agent):
+    return agent.humid
+
+def burned(model):
+    return model.burned
+
+def batch_run():
+    fix_params = {
+        "height": 20,
+        "width": 20
+    }
+
+    variable_params = {
+        "density": [0.01, 1.0, 0.01], 
+        "humidity_level": [0.1, 1.0, 0.01]
+    }
+    experiments_per_parameter_configuration = 10
+    max_steps_per_simulation = 10
+    batch_run = BatchRunner(
+        ForestFire,
+        variable_params,
+        fix_params,
+        iterations = experiments_per_parameter_configuration,
+        max_steps = max_steps_per_simulation,
+        model_reporters = {
+            "Fine": fine,
+            "Burned Out": burned,
+            "Humid": humid,
+        },
+        #agent_reporters= {
+         #   "Humid" : humid
+        #},
+
+    )
+
+    batch_run.run_all()
+
+    run_model_data = batch_run.get_model_vars_dataframe()
+    ##run_agent_data = batch_run.get_agent_vars_dataframe()
+
+    now = str(datetime.datetime.now())
+    file_name_suffix = ("_iter_"+str(experiments_per_parameter_configuration)+"_steps_"+str(max_steps_per_simulation)+"_"+now)
+    run_model_data.to_csv("model_data"+file_name_suffix+".csv")
+    ##run_agent_data.to_csv("agent_data"+file_name_suffix+".csv")
+
+
+
+
+

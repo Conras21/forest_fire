@@ -1,6 +1,8 @@
+from operator import truediv
 from mesa.visualization.modules import CanvasGrid, ChartModule, PieChartModule
 from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.UserParam import UserSettableParameter
+
 
 from .model import ForestFire
 
@@ -30,7 +32,7 @@ model_params = {
     "height": 100,
     "width": 100,
     "density": UserSettableParameter("slider", "Tree density", 0.65, 0.01, 1.0, 0.01),
-    "humidity_level": UserSettableParameter("slider", "Humidity Level", 0.5, 0.1, 1.0, 0.1),
+    "humidity_level": UserSettableParameter("slider", "Humidity Level", 0.5, 0.01, 1.0, 0.01),
 }
 server = ModularServer(
     ForestFire, [canvas_element, tree_chart, pie_chart], "Forest Fire", model_params
