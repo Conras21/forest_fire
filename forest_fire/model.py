@@ -8,7 +8,7 @@ from mesa.space import Grid
 from mesa.time import RandomActivation
 from mesa.batchrunner import BatchRunner
 
-from agent import TreeCell
+from .agent import TreeCell
 
 
 class ForestFire(Model):
@@ -38,9 +38,7 @@ class ForestFire(Model):
 
         self.fine = lambda m: self.count_type(m, "Fine")
         self.fire = lambda m: self.count_type(m, "On Fire")
-        self.burned = lambda m: self.count_type(m, "Burned Out")
-        self.humid = lambda m: self.count_type(m, "Humid")
-
+       
         count = 1
         for (contents, x, y) in self.grid.coord_iter():
             if self.random.random() < density:
@@ -93,29 +91,30 @@ class ForestFire(Model):
 
 
 def fine(model):
-    return model.fine
+    return lambda model: model.count_type(model, "Fine")
 
 def fire(model):
-    return model.fire
+    return lambda model: model.count_type(model, "On Fire")
 
-def humid(agent):
-    return agent.humid
+def humid(model):
+    return lambda model: model.count_type(model, "Humid")
 
 def burned(model):
-    return model.burned
+    return lambda model: model.count_type(model, "Burned Out")
+
 
 def batch_run():
     fix_params = {
-        "height": 20,
-        "width": 20
+        "height": 100,
+        "width": 100,
     }
 
     variable_params = {
         "density": [0.01, 1.0, 0.01], 
         "humidity_level": [0.1, 1.0, 0.01]
     }
-    experiments_per_parameter_configuration = 10
-    max_steps_per_simulation = 10
+    experiments_per_parameter_configuration = 250
+    max_steps_per_simulation = 250
     batch_run = BatchRunner(
         ForestFire,
         variable_params,
@@ -123,9 +122,10 @@ def batch_run():
         iterations = experiments_per_parameter_configuration,
         max_steps = max_steps_per_simulation,
         model_reporters = {
-            "Fine": fine,
-            "Burned Out": burned,
-            "Humid": humid,
+            "Fine": fine(ForestFire),
+            "Humid": humid(ForestFire),
+            "Fire": fire(ForestFire),
+            "Burned Out": burned(ForestFire),
         },
         #agent_reporters= {
          #   "Humid" : humid
