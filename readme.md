@@ -1,6 +1,7 @@
 O novo modelo é baseado no modelo "Forest fire", com a adição de uma nova condição da árvore, "úmida", em que se dificulta a queima da floresta.
 
-A hipótese em questão é de que com a floresta úmida a dificuldade de queimar é maior, com isso foi adicionado a opção de escolher a porcentagem de árvores úmidas no modelo, sendo que cada arvore úmida tem uma chance de 33,3% de voltar a secar e pegar fogo caso o foco ainda esteja próximo.
+A hipótese em questão é de que com a floresta úmida a dificuldade de queimar é maior, com isso foi adicionado a opção de escolher a porcentagem de árvores úmidas no modelo, sendo que cada arvore úmida tem uma chance de 33,3% de voltar a secar e pegar fogo caso o foco ainda esteja próximo. Com base na porcentagem escolhida, o modelo gera as árvores úmidas aleatoriamente.
+
 
 O arquivo CSV gerado contém as seguintes variáveis:
 
