@@ -1,6 +1,43 @@
 O novo modelo é baseado no modelo "Forest fire", com a adição de uma nova condição da árvore, "úmida", em que se dificulta a queima da floresta.
 
-A hipótese em questão é de que com a floresta úmida a dificuldade de queimar é maior, com isso foi adicionado a opção de escolher a porcentagem de árvores úmidas no modelo, sendo que cada arvore úmida tem uma chance de 33,3% de voltar a secar e pegar fogo caso o foco ainda esteja próximo. Com base na porcentagem escolhida, o modelo gera as árvores úmidas aleatoriamente.
+A hipótese em questão é de que com a floresta úmida a dificuldade de queimar é maior, com isso foi adicionado a opção de escolher a porcentagem de árvores úmidas no modelo, sendo que cada arvore úmida tem uma chance de 25% de voltar a secar e pegar fogo caso o foco ainda esteja próximo. Com base na porcentagem escolhida, o modelo gera as árvores úmidas aleatoriamente, com o seguinte código:
+
+count = 1
+        for (contents, x, y) in self.grid.coord_iter():
+            if self.random.random() < density:
+                count += 1
+        quantity = count * (humidity_level)
+        randomX = self.random.sample(range(count), int(quantity))
+        randomY = self.random.sample(range(count), int(quantity))
+        randomX.sort()
+        randomY.sort()
+        ##
+        # Place a tree in each cell with Prob = density
+        count = 0
+        for (contents, x, y) in self.grid.coord_iter():
+            if self.random.random() < density:
+                # Create a tree
+                new_tree = TreeCell((x, y), self)
+                # Set all trees in the first column on fire.
+                if x == 0:
+                    new_tree.condition = "On Fire"
+                if x in randomX and x != 0:
+                    if y in randomY:
+                        new_tree.condition = "Humid"
+                self.grid._place_agent((x, y), new_tree)
+                self.schedule.add(new_tree)
+
+E para determinar se a árvore pega fogo ou não, em todo passo é gerado um numero aleatorio de 0 até 3, o que determina 25% de chance de árvore voltar a pegar fogo.
+
+if self.condition == "On Fire":
+            for neighbor in self.model.grid.neighbor_iter(self.pos):
+                if neighbor.condition == "Fine":
+                    neighbor.condition = "On Fire"
+                if neighbor.condition == "Humid":
+                    number = self.random.randint(0,3)
+                    if number == 0:
+                        neighbor.condition = "Fine"
+            self.condition = "Burned Out"
 
 
 O arquivo CSV gerado contém as seguintes variáveis:
