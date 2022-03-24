@@ -1,3 +1,4 @@
+from cgi import test
 import datetime
 from doctest import OutputChecker
 from random import random, sample
@@ -7,6 +8,9 @@ from mesa.datacollection import DataCollector
 from mesa.space import Grid
 from mesa.time import RandomActivation
 from mesa.batchrunner import BatchRunner
+from os import sep
+
+from numpy import column_stack
 
 from .agent import TreeCell
 
@@ -27,17 +31,27 @@ class ForestFire(Model):
         # Set up model objects
         self.schedule = RandomActivation(self)
         self.grid = Grid(width, height, torus=False)
+
+        self.count_steps = 0
+
+        self.density = density
+        self.humidity_level = humidity_level
+
         self.datacollector = DataCollector(
-            {
+            model_reporters={
                 "Fine": lambda m: self.count_type(m, "Fine"),
                 "On Fire": lambda m: self.count_type(m, "On Fire"),
                 "Burned Out": lambda m: self.count_type(m, "Burned Out"),
-                "Humid": lambda m: self.count_type(m, "Humid")
+                "Humid": lambda m: self.count_type(m, "Humid"),
+                "Percent": lambda m: self.count_percentage(m)
+            }
+        )
+        self.datacollector_agent = DataCollector(
+            agent_reporters={
+                "Steps to fire up": lambda x: x.count_steps
             }
         )
 
-        self.fine = lambda m: self.count_type(m, "Fine")
-        self.fire = lambda m: self.count_type(m, "On Fire")
        
         count = 1
         for (contents, x, y) in self.grid.coord_iter():
@@ -49,7 +63,6 @@ class ForestFire(Model):
         randomX.sort()
         randomY.sort()
         # Place a tree in each cell with Prob = density
-        count = 0
         for (contents, x, y) in self.grid.coord_iter():
             if self.random.random() < density:
                 # Create a tree
@@ -62,7 +75,7 @@ class ForestFire(Model):
                         new_tree.condition = "Humid"
                 self.grid._place_agent((x, y), new_tree)
                 self.schedule.add(new_tree)
-
+                self.count_steps += 1
         self.running = True
         self.datacollector.collect(self)
 
@@ -78,6 +91,20 @@ class ForestFire(Model):
         if self.count_type(self, "On Fire") == 0:
             self.running = False
 
+            alive = self.count_type(self, "Fine")
+            humid = self.count_type(self, "Humid")
+            percentage = (alive + humid)/ self.count_steps
+
+
+            now = str(datetime.datetime.now()).replace(":", "-")
+            model = self.datacollector.get_model_vars_dataframe()
+            model.to_csv("spreadsheet" + sep + "model_data humi=" + str(self.humidity_level) + " dens=" + str(self.density) + " " + now + ".csv")
+
+            self.datacollector_agent.collect(self)
+            agent = self.datacollector_agent.get_agent_vars_dataframe()
+            agent.to_csv("spreadsheet" + sep + "agent_data humi=" + str(self.humidity_level) + " dens=" + str(self.density) + " " + now + ".csv")  
+        
+
     @staticmethod
     def count_type(model, tree_condition):
         """
@@ -88,60 +115,13 @@ class ForestFire(Model):
             if tree.condition == tree_condition:
                 count += 1
         return count
+    def count_percentage(self, model):
+            total = self.count_type(self, "Humid") + self.count_type(self, "Fine") + self.count_type(self, "Burned Out")
+            alive = self.count_type(self, "Humid") + self.count_type(self, "Fine")
+            percentage = alive / total
+            return percentage
 
 
-def fine(model):
-    return lambda model: model.count_type(model, "Fine")
-
-def fire(model):
-    return lambda model: model.count_type(model, "On Fire")
-
-def humid(model):
-    return lambda model: model.count_type(model, "Humid")
-
-def burned(model):
-    return lambda model: model.count_type(model, "Burned Out")
-
-
-def batch_run():
-    fix_params = {
-        "height": 100,
-        "width": 100,
-    }
-
-    variable_params = {
-        "density": [0.01, 1.0, 0.01], 
-        "humidity_level": [0.1, 1.0, 0.01]
-    }
-    experiments_per_parameter_configuration = 250
-    max_steps_per_simulation = 250
-    batch_run = BatchRunner(
-        ForestFire,
-        variable_params,
-        fix_params,
-        iterations = experiments_per_parameter_configuration,
-        max_steps = max_steps_per_simulation,
-        model_reporters = {
-            "Fine": fine(ForestFire),
-            "Humid": humid(ForestFire),
-            "Fire": fire(ForestFire),
-            "Burned Out": burned(ForestFire),
-        },
-        #agent_reporters= {
-         #   "Humid" : humid
-        #},
-
-    )
-
-    batch_run.run_all()
-
-    run_model_data = batch_run.get_model_vars_dataframe()
-    ##run_agent_data = batch_run.get_agent_vars_dataframe()
-
-    now = str(datetime.datetime.now())
-    file_name_suffix = ("_iter_"+str(experiments_per_parameter_configuration)+"_steps_"+str(max_steps_per_simulation)+"_"+now)
-    run_model_data.to_csv("model_data"+file_name_suffix+".csv")
-    ##run_agent_data.to_csv("agent_data"+file_name_suffix+".csv")
 
 
 

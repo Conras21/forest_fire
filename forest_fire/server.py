@@ -1,13 +1,12 @@
 from operator import truediv
-from mesa.visualization.modules import CanvasGrid, ChartModule, PieChartModule
+from pyexpat import model
+from mesa.visualization.modules import CanvasGrid, ChartModule, PieChartModule, TextElement
 from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.UserParam import UserSettableParameter
-
 
 from .model import ForestFire
 
 COLORS = {"Fine": "#00AA00", "On Fire": "#880000", "Burned Out": "#000000", "Humid": "#006400"}
-
 
 def forest_fire_portrayal(tree):
     if tree is None:
@@ -27,6 +26,7 @@ tree_chart = ChartModule(
 pie_chart = PieChartModule(
     [{"Label": label, "Color": color} for (label, color) in COLORS.items()]
 )
+
 
 model_params = {
     "height": 100,

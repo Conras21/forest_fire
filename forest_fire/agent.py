@@ -25,6 +25,7 @@ class TreeCell(Agent):
         super().__init__(pos, model)
         self.pos = pos
         self.condition = "Fine"
+        self.count_steps = -1
 
     def step(self):
         """
@@ -34,8 +35,10 @@ class TreeCell(Agent):
             for neighbor in self.model.grid.neighbor_iter(self.pos):
                 if neighbor.condition == "Fine":
                     neighbor.condition = "On Fire"
+                    neighbor.count_steps = self.model.schedule.steps + 1
                 if neighbor.condition == "Humid":
                     number = self.random.randint(0,3)
                     if number == 0:
                         neighbor.condition = "Fine"
+
             self.condition = "Burned Out"
