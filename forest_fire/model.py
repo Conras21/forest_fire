@@ -14,7 +14,6 @@ from numpy import column_stack
 
 from .agent import TreeCell
 
-#https://bit.ly/3utw1EL link loopy
 
 class ForestFire(Model):
     """
